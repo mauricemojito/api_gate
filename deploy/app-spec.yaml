@@ -1,0 +1,62 @@
+
+databases:
+- engine: PG
+  name: api-gate-db
+  num_nodes: 1
+  size: db-s-dev-database
+  version: "12"
+- cluster_name: api-gate-redis
+  engine: REDIS
+  name: api-gate-redis
+  production: true
+  version: "7"
+name: api-gate
+region: nyc
+services:
+- dockerfile_path: Dockerfile.web
+  envs:
+  - key: DATABASE_URL
+    scope: RUN_TIME
+    value: ${api-gate-db.DATABASE_URL}
+  - key: DJANGO_SETTINGS_MODULE
+    scope: RUN_AND_BUILD_TIME
+    value: api_gate.settings_production
+  - key: SECRET_KEY
+    scope: RUN_AND_BUILD_TIME
+    value: 'qtTiPutrSdLRGtxfViqDEaMcrSFqEjoAzgUIVxzabbLprChNBNpsUFewyqGM'
+  - key: REDIS_URL
+    scope: RUN_TIME
+    value: ${api-gate-redis.DATABASE_URL}
+  github:
+    branch: main
+    deploy_on_push: true
+    repo: user/api-gate
+  http_port: 8080
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  name: api-gate-web
+  routes:
+  - path: /
+workers:
+- dockerfile_path: Dockerfile.web
+  envs:
+  - key: DATABASE_URL
+    scope: RUN_TIME
+    value: ${api-gate-db.DATABASE_URL}
+  - key: DJANGO_SETTINGS_MODULE
+    scope: RUN_AND_BUILD_TIME
+    value: api_gate.settings_production
+  - key: SECRET_KEY
+    scope: RUN_AND_BUILD_TIME
+    value: 'qtTiPutrSdLRGtxfViqDEaMcrSFqEjoAzgUIVxzabbLprChNBNpsUFewyqGM'
+  - key: REDIS_URL
+    scope: RUN_TIME
+    value: ${api-gate-redis.DATABASE_URL}
+  github:
+    branch: main
+    deploy_on_push: true
+    repo: user/api-gate
+  instance_count: 1
+  instance_size_slug: basic-xs
+  name: api-gate-celery
+  run_command: celery -A api_gate worker -l INFO --pool=gevent --concurrency 2

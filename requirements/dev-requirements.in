@@ -1,0 +1,6 @@
+-r requirements.in
+django-debug-toolbar
+pip-tools
+pre-commit
+black
+isort
